@@ -180,6 +180,75 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
 
     """
 
+    # create an axes
+    if ax is None:
+        import matplotlib.pyplot as plt
+        _, ax = plt.subplots()
+
+    # recursion
+    left_index = [0]
+
+    def insert_node(node: None, x: float) -> float:
+        """
+        recursively insert the node in the tree
+        and draw the subtree
+        """
+
+        # recursion base case
+        if node.left is None and node.right is None:
+            y = left_index[0]
+            left_index[0] += 1
+            ax.text(
+                x + 0.1,
+                y,
+                node.name,
+                va="center",
+            )
+
+            return y
+
+        # determine the distance
+        left_x = x + node.left_distance
+        right_x = x + node.right_distance
+
+        # insert the left and right subtree;
+        left_y = insert_node(node.left, left_x)
+        right_y = insert_node(node.right, right_x)
+
+        # insert horizontal branches
+        ax.plot(
+            [x, left_x],
+            [left_y, left_y],
+            color="black",
+        )
+
+        ax.plot(
+            [x, right_x],
+            [right_y, right_y],
+            color="black",
+        )
+
+        # vertical branch
+        ax.plot(
+            [x, x],
+            [left_y, right_y],
+            color="black",
+        )
+
+        y = (left_y + right_y) / 2
+
+        return y
+
+    # insert root
+    root_y = insert_node(tree, 0.0)
+
+    ax.plot(
+        [-0.2, 0],
+        [root_y, root_y],
+        color="black"
+    )
+
+    # ax.set_yticks([])
     return ax
 
 
