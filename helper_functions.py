@@ -70,10 +70,90 @@ def neighbor_joining(distances: np.ndarray, labels: list) -> Node:
         A root node of the neighbor joining tree.
 
     """
-    
-    self.tree = Node()
+    distances = distances.copy()
 
-    raise NotImplementedError()
+    nodes = [
+        Node(
+            name=label,
+            left=None,
+            left_distance=0.0,
+            right=None,
+            right_distance=0.0,
+        ) for label in labels
+    ]
+
+    internal_nodes_index = 0
+
+    while len(nodes) > 2:
+        row_sum = np.sum(distances, axis=1)
+
+        n = len(nodes)
+        Q = np.full(distances.shape, np.inf)
+
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    Q[i, j] = (n - 2) * distances[i, j] - row_sum[i] - row_sum[j]
+
+        index = np.argmin(Q)
+        i, j = np.unravel_index(index, Q.shape)
+
+        d_i_j = distances[i, j]
+
+        # caculate the branck len
+        distance_i = 0.5 * (d_i_j + (row_sum[i] - row_sum[j]) / (n - 2))
+        distance_j = d_i_j - distance_i
+
+        # create a new node
+        new_node = Node(
+            name=f"internal_node_{internal_nodes_index}",
+            left=nodes[i],
+            left_distance=distance_i,
+            right=nodes[j],
+            right_distance=distance_j,
+        )
+
+        internal_nodes_index += 1
+
+        left_nodes = [
+            k for k in range(n)
+            if k != i and k != j
+        ]
+
+        new_distances = []
+        for k in left_nodes:
+            distance_to_k = (distances[i, k] + distances[j, k] - d_i_j) / 2
+            new_distances.append(distance_to_k)
+
+        # remove the i and j
+        left_distances = distances[np.ix_(left_nodes, left_nodes)]
+
+        # update the new dis matrix
+        new_size = n - 1
+        update_distances = np.zeros((new_size, new_size))
+        # add the left node in distances
+        update_distances[:-1, :-1] = left_distances
+        # add the new node
+        update_distances[-1, :-1] = new_distances
+        update_distances[:-1, -1] = new_distances
+
+        distances = update_distances
+
+        nodes = [nodes[k] for k in left_nodes]
+        nodes.append(new_node)
+
+    # left two nodes
+    final_dis = distances[0, 1] / 2
+
+    root = Node(
+        name="root",
+        left=nodes[0],
+        left_distance=final_dis,
+        right=nodes[1],
+        right_distance=final_dis
+    )
+
+    return root
 
 
 def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
