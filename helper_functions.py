@@ -185,6 +185,8 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
         import matplotlib.pyplot as plt
         _, ax = plt.subplots()
 
+    label_colors = kwargs.get("label_colors", {})
+
     # recursion
     left_index = [0]
 
@@ -198,11 +200,16 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
         if node.left is None and node.right is None:
             y = left_index[0]
             left_index[0] += 1
+
+            # get the color
+            color = label_colors.get(node.name, "black")
+
             ax.text(
                 x + 0.1,
                 y,
                 node.name,
                 va="center",
+                color = color,
             )
 
             return y
@@ -330,6 +337,11 @@ def reroot_tree(original_tree: Node, outgroup_node: Node) -> Node:
 
     return new_root
 
+def count_leaves(node):
+    if node.left is None and node.right is None:
+        return 1
+
+    return count_leaves(node.left) + count_leaves(node.right)
 
 def sort_children_by_leaves(tree: Node) -> None:
     """Sort the children of a tree by their corresponding number of leaves.
@@ -342,8 +354,27 @@ def sort_children_by_leaves(tree: Node) -> None:
         The root node of the tree.
 
     """
-    raise NotImplementedError()
+    # base basic
+    if tree is None:
+        return
 
+    if tree.left is None and tree.right is None:
+        return
+
+    # Sort both subtrees first
+    sort_children_by_leaves(tree.left)
+    sort_children_by_leaves(tree.right)
+
+    left_count = count_leaves(tree.left)
+    right_count = count_leaves(tree.right)
+
+    # Put subtree with fewer leaves on the left
+    if left_count > right_count:
+        tree.left, tree.right = (tree.right, tree.left)
+        tree.left_distance, tree.right_distance = (
+            tree.right_distance,
+            tree.left_distance,
+        )
 
 def plot_nj_tree_radial(tree: Node, ax: Axes = None, **kwargs) -> None:
     """A function for plotting neighbor joining phylogeny dendrogram
