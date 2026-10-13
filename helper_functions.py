@@ -187,6 +187,9 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
 
     label_colors = kwargs.get("label_colors", {})
 
+    # display the confidence in the tree
+    label_confidence = kwargs.get("label_confidence", False)
+
     # recursion
     left_index = [0]
 
@@ -243,6 +246,18 @@ def plot_nj_tree(tree: Node, ax: Axes = None, **kwargs) -> None:
         )
 
         y = (left_y + right_y) / 2
+
+        # add the code for show the confidence
+        if label_confidence and node.confidence is not None:
+            ax.annotate(
+                f"{node.confidence:.2f}",
+                xy=(x, y),
+                xytext=(-3, 3),
+                textcoords="offset points",
+                fontsize=8,
+                ha="right",
+                va="bottom"
+            )
 
         return y
 
